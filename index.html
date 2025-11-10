@@ -361,14 +361,20 @@
             };
 
             // --- INICIO DE LA SIMULACIÓN DE ENVÍO ---
+            // --- INICIO DEL ENVÍO REAL A GOOGLE SHEETS ---
 
             // IMPORTANTE:
             // Reemplaza esta URL con la URL de tu Web App de Google Apps Script
+            // ¡Asegúrate de reemplazar esta URL con la URL de tu Web App!
             const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbzTxgwpSo-66tWPEC5w3ixdwDvMbRKzpnmUwkd9dLJ_pLMGFrkln_CTpp_hqMLWDg7l/exec';
 
             console.log("--- SIMULACIÓN DE ENVÍO A GOOGLE SHEETS ---");
             console.log("URL Destino (Reemplazar):", appsScriptUrl);
             console.log("Datos a enviar (JSON):", JSON.stringify(dataToSubmit, null, 2));
+            // Opcional: registrar en consola lo que se envía
+            console.log("Enviando a Google Sheets...");
+            console.log("URL Destino:", appsScriptUrl);
+            console.log("Datos (JSON):", JSON.stringify(dataToSubmit, null, 2));
             
             try {
                 // En una implementación real, descomentarías la siguiente sección:
@@ -379,7 +385,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    // Redirigir manualmente si es necesario, aunque 'no-cors' lo previene
+                    // Redirigir manually si es necesario, aunque 'no-cors' lo previene
                     // redirect: 'follow', 
                     body: JSON.stringify(dataToSubmit)
                 });
@@ -393,9 +399,26 @@
                 */
 
                 // Simulamos una demora de red de 2 segundos
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // await new Promise(resolve => setTimeout(resolve, 2000));
+                // console.log("Simulación de envío completada.");
 
-                console.log("Simulación de envío completada.");
+                // ¡Esta es la llamada real!
+                const response = await fetch(appsScriptUrl, {
+                    method: 'POST',
+                    // Google Apps Script (doPost) espera los datos en e.postData.contents
+                    // Enviarlo como 'text/plain' es la forma más robusta de asegurar
+                    // que Apps Script reciba el JSON como un string para parsear.
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8', 
+                    },
+                    body: JSON.stringify(dataToSubmit),
+                    mode: 'no-cors' // 'no-cors' es vital para evitar errores de CORS con Apps Script
+                });
+
+                // Con 'no-cors', la respuesta es "opaca" (no podemos leerla).
+                // No podemos verificar response.ok. Simplemente asumimos que se envió
+                // si la promesa de fetch se resolvió sin un error de red.
+                console.log("Datos enviados (modo no-cors). El script de Google ahora está procesando.");
                 
                 // (Modificado) Actualizar UI en lugar de cambiar de pantalla
                 submitBtn.textContent = 'Enviado con Éxito';
