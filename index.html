@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actividad: Liderazgo Consciente</title>
+    <!-- Incluimos Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Fondo gris claro */
+        }
+        
+        .screen {
+            display: none; /* Ocultar todas las pantallas por defecto */
+            width: 100%;
+        }
+
+        /* Estilo para la pantalla activa */
+        .screen.active {
+            display: block;
+        }
+
+        /* Estilo para las opciones de respuesta */
+        .option-card {
+            border: 2px solid #e5e7eb; /* Borde gris */
+            transition: all 0.2s ease-in-out;
+        }
+
+        .option-card:hover {
+            border-color: #3b82f6; /* Borde azul al pasar el ratón */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Estilo para la barra de progreso */
+        .progress-bar-container {
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            height: 8px;
+        }
+
+        .progress-bar {
+            background-color: #3b82f6;
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-3xl bg-white rounded-xl shadow-2xl overflow-hidden">
+
+        <!-- Pantalla 1: Bienvenida y Nombre -->
+        <div id="screen-welcome" class="screen active p-8 md:p-12 text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Actividad de Liderazgo Consciente</h1>
+            <p class="text-lg text-gray-600 mb-8">Por favor, introduce tu nombre para comenzar.</p>
+            <form id="name-form">
+                <input type="text" id="user-name" class="w-full max-w-md mx-auto px-4 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Escribe tu nombre completo" required>
+                <button type="submit" class="mt-6 w-full max-w-md mx-auto bg-blue-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
+                    Comenzar
+                </button>
+            </form>
+        </div>
+
+        <!-- Pantalla 2: Instrucciones -->
+        <div id="screen-instructions" class="screen p-8 md:p-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Instrucciones</h2>
+            <div class="prose prose-lg text-gray-700 max-w-none">
+                <p>Lee cuidadosamente cada una de las siguientes afirmaciones y selecciona la que más se asemeje a tu forma de pensar. Es vital que contestes los cinco niveles.</p>
+                <p>Ten en cuenta que solo puedes realizar esta actividad una vez. Recuerda revisar los detalles completos de la actividad en Canvas.</p>
+                <p class="font-semibold mt-4">Al finalizar la actividad, se te proporcionará un reporte con tus respuestas. Asegúrate de tomar una captura de pantalla de esta información, ya que será parte de tu entregable.</p>
+            </div>
+            <button id="start-quiz-btn" class="mt-8 w-full bg-blue-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
+                Entendido, ¡iniciar actividad!
+            </button>
+        </div>
+
+        <!-- Pantalla 3: Cuestionario -->
+        <div id="screen-quiz" class="screen p-8 md:p-12">
+            <!-- Barra de progreso -->
+            <div class="mb-6">
+                <p class="text-sm font-medium text-gray-600 mb-2" id="progress-text">Pregunta 1 de 5</p>
+                <div class="progress-bar-container w-full">
+                    <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Contenedor de la pregunta -->
+            <div id="question-container">
+                <h2 id="question-category" class="text-2xl font-bold text-gray-800 mb-6"></h2>
+                <div id="options-container" class="space-y-4">
+                    <!-- Las opciones se generarán con JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Pantalla 4: Reporte Final -->
+        <div id="screen-report" class="screen p-8 md:p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">Reporte de Respuestas</h2>
+            
+            <!-- Nivel de Clasificación (Nuevo) -->
+            <h3 id="report-level" class="text-2xl font-bold text-blue-600 mb-6 text-center"></h3>
+            
+            <p class="text-lg text-gray-600 mb-2">¡Gracias por completar la actividad, <span id="report-user-name" class="font-bold"></span>!</p>
+            <p class="text-gray-700 mb-8">A continuación, se muestra un resumen de las afirmaciones que seleccionaste.</p>
+            
+            <div id="report-summary" class="space-y-4 border-t border-b border-gray-200 py-6">
+                <!-- El resumen de respuestas se generará con JavaScript -->
+            </div>
+
+            <button id="submit-btn" class="mt-8 w-full bg-green-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                Finalizar y Enviar Respuestas
+            </button>
+            <!-- Mensaje de estado de envío (Nuevo) -->
+            <p id="submit-status" class="text-sm text-gray-600 mt-4 text-center"></p>
+        </div>
+        
+        <!-- Pantalla 5: Cargando (Ya no se usa, pero se deja por si acaso) -->
+        <div id="screen-loading" class="screen p-8 md:p-12 text-center">
+            <div class="flex justify-center items-center h-48">
+                <svg class="animate-spin h-12 w-12 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-700">Enviando tus respuestas...</h2>
+        </div>
+
+        <!-- Pantalla 6: Agradecimiento (Ya no se usa) -->
+        <div id="screen-thanks" class="screen p-8 md:p-12 text-center">
+            <h1 class="text-3xl font-bold text-green-600 mb-4">¡Enviado con Éxito!</h1>
+            <p class="text-lg text-gray-700">Tus respuestas han sido registradas.</p>
+            <p class="text-gray-600 mt-2">Ya puedes cerrar esta ventana.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- ESTADO DE LA APLICACIÓN ---
+        let userName = "";
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // Almacenará { category: { text, points } }
+
+        // --- DATOS DEL CUESTIONARIO ---
+        const quizData = [
+            {
+                category: "Categoría 1: Principios de Liderazgo Consciente",
+                options: [
+                    { text: "Un ejemplo de un liderazgo consciente sería Satya Nadella, CEO de Microsoft, conocido por su enfoque en la empatía, la innovación inclusiva y la transformación cultural dentro de la empresa.", points: 100 },
+                    { text: "El liderazgo consciente es un enfoque que combina la conciencia personal con la responsabilidad social, enfocándose en la creación de valor sostenible a largo plazo. Se centra en la empatía, la ética y el bienestar colectivo.", points: 200 },
+                    { text: "Un líder consciente puede influir en la cultura organizacional promoviendo valores como la transparencia, la equidad y la inclusión, y al modelar comportamientos que otros en la organización aspiren a seguir.", points: 300 },
+                    { text: "Son dos principios fundamentales del liderazgo consciente: 1. Autoconciencia que permite conocer y entender las propias emociones, valores y motivaciones; 2. Empatía es la capacidad de entender y compartir los sentimientos de los demás.", points: 400 }
+                ]
+            },
+            {
+                category: "Categoría 2: Inteligencia Emocional",
+                options: [
+                    { text: "La inteligencia emocional es la capacidad de reconocer y manejar nuestras propias emociones y las de los demás. Es crucial en el liderazgo consciente porque permite a los líderes conectar genuinamente con sus equipos y tomar decisiones más informadas y empáticas.", points: 100 },
+                    { text: "Los cuatro componentes principales de la inteligencia emocional según Daniel Goleman son: Autoconciencia, autorregulación, motivación, empatía y habilidades sociales.", points: 200 },
+                    { text: "Una situación en la que un líder utilizó la inteligencia emocional para resolver un conflicto se da de manera natural porque manejó un conflicto entre dos empleados al reconocer sus propias emociones y las de los involucrados, promoviendo una conversación abierta y empática que llevó a una resolución que todos consideraron justa.", points: 300 },
+                    { text: "La inteligencia emocional puede desarrollarse a nivel personal, mediante prácticas desde el punto de vista físico, como la meditación y la autoreflexión, mientras que a nivel organizacional se implementan programas de capacitación y se fomenta una cultura de feedback constante.", points: 400 }
+                ]
+            },
+            {
+                category: "Categoría 3: Comunicación Empática",
+                options: [
+                    { text: "La comunicación empática es la habilidad de escuchar y comprender activamente las perspectivas y emociones de los demás. Es crucial porque construye confianza y fortalece las relaciones dentro del equipo.", points: 100 },
+                    { text: "A continuación, se mencionan dos técnicas de comunicación empática. 1. Escucha activa es mostrar atención genuina y responder de manera reflexiva y 2. La validación emocional que es reconocer y respetar los sentimientos y emociones de los otros sin juzgar.", points: 200 },
+                    { text: "Los retos que un líder puede enfrentar al implementar comunicación empática en un equipo diverso existen porque puede haber barreras culturales y lingüísticas, así como diferentes estilos de comunicación y niveles de apertura emocional, un líder debe ser adaptable y sensible a estas diferencias.", points: 300 },
+                    { text: "Un escenario donde la comunicación empática mejoró el desempeño de un equipo es porque un líder usó esa acción con la finalidad de entender las preocupaciones de su equipo sobre una nueva política o una determinada forma de trabajar. Al validar sus emociones y discutir abiertamente, los empleados se sintieron escuchados y colaboraron más eficazmente en la implementación.", points: 400 }
+                ]
+            },
+            {
+                category: "Categoría 4: Toma de Decisiones Éticas",
+                options: [
+                    { text: "Tomar decisiones éticas no solo considera el beneficio propio o empresarial, sino también el impacto en las personas, la sociedad y el medio ambiente.", points: 100 },
+                    { text: "Existe un modelo de toma de decisiones que hace referencia a los Cuatro Cuadrantes, que considera la legalidad, equidad, resultados y beneficios a largo plazo, que puede ser utilizado por una persona que ejerce un liderazgo consciente.", points: 200 },
+                    { text: "Una situación en la que un líder haya tomado una decisión ética difícil se observa cuando un líder decide rechazar un contrato lucrativo porque implicaba prácticas laborales injustas, esta decisión con el paso del tiempo, fortaleció la reputación de la empresa y atrajo clientes que valoran la ética.", points: 300 },
+                    { text: "Un líder consciente puede fomentar un ambiente que promueva la toma de decisiones éticas entre los miembros del equipo al establecer un código de conducta claro, liderando con el ejemplo, proporcionando formación ética con la finalidad de crear un entorno en el que se fomente la transparencia y se valoren las decisiones éticas.", points: 400 }
+                ]
+            },
+            {
+                category: "Categoría 5: Estrategias de Inclusión y Diversidad",
+                options: [
+                    { text: "Inclusión se refiere a crear un entorno donde todas las personas se sientan valoradas y respetadas. Diversidad se refiere a la presencia de diferencias entre los miembros del equipo, incluyendo género, raza, orientación sexual, y más.", points: 100 },
+                    { text: "Mejora de la creatividad e innovación y aumento de la satisfacción y retención de empleados.", points: 200 },
+                    { text: "Implementar procesos de contratación inclusivos que eliminen sesgos y promuevan la participación de candidatos diversos.", points: 300 },
+                    { text: "El caso de IBM, que, al adoptar políticas de diversidad e inclusión, logró innovaciones significativas y una mejor adaptación a mercados globales variados.", points: 400 }
+                ]
+            }
+        ];
+
+        // --- SELECTORES DE ELEMENTOS ---
+        const screens = document.querySelectorAll('.screen');
+        const nameForm = document.getElementById('name-form');
+        const nameInput = document.getElementById('user-name');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const questionCategory = document.getElementById('question-category');
+        const optionsContainer = document.getElementById('options-container');
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress-bar');
+        const reportUserName = document.getElementById('report-user-name');
+        const reportSummary = document.getElementById('report-summary');
+        const submitBtn = document.getElementById('submit-btn');
+        // Nuevos selectores
+        const reportLevel = document.getElementById('report-level');
+        const submitStatus = document.getElementById('submit-status');
+
+        // --- LÓGICA DE LA APLICACIÓN ---
+
+        // Función para mostrar una pantalla específica
+        function showScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // 1. Manejar el envío del nombre
+        nameForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            userName = nameInput.value.trim();
+            if (userName) {
+                showScreen('screen-instructions');
+            }
+        });
+
+        // 2. Empezar el cuestionario
+        startQuizBtn.addEventListener('click', () => {
+            showScreen('screen-quiz');
+            renderQuestion(currentQuestionIndex);
+        });
+
+        // 3. Renderizar la pregunta actual
+        function renderQuestion(index) {
+            if (index >= quizData.length) {
+                // Fin del cuestionario
+                showReport();
+                return;
+            }
+
+            const question = quizData[index];
+            questionCategory.textContent = question.category;
+            optionsContainer.innerHTML = ''; // Limpiar opciones anteriores
+
+            question.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option-card p-5 rounded-lg cursor-pointer';
+                optionElement.textContent = option.text;
+                
+                optionElement.addEventListener('click', () => {
+                    selectAnswer(question.category, option);
+                });
+                
+                optionsContainer.appendChild(optionElement);
+            });
+
+            // Actualizar barra de progreso
+            progressText.textContent = `Pregunta ${index + 1} de ${quizData.length}`;
+            progressBar.style.width = `${((index + 1) / quizData.length) * 100}%`;
+        }
+
+        // 4. Manejar la selección de respuesta
+        function selectAnswer(category, option) {
+            // Guardar la respuesta (texto y puntos)
+            userAnswers[category] = {
+                text: option.text,
+                points: option.points
+            };
+
+            // Avanzar a la siguiente pregunta después de una breve pausa
+            currentQuestionIndex++;
+            setTimeout(() => {
+                renderQuestion(currentQuestionIndex);
+            }, 300); // Pequeña demora para feedback visual
+        }
+
+        // (Nuevo) Función para obtener clasificación
+        function getScoreClassification(score) {
+            if (score <= 1000) {
+                return "Nivel Principiante: Conoce los conceptos básicos y muestra una comprensión inicial de los principios del liderazgo consciente.";
+            } else if (score <= 2000) {
+                return "Nivel Intermedio: Muestra una comprensión sólida y puede aplicar los principios del liderazgo consciente en situaciones simuladas y menos complejas.";
+            } else if (score <= 3000) {
+                return "Nivel Avanzado: Demuestra competencias avanzadas, puede aplicar el liderazgo consciente en situaciones más complejas y muestra habilidades de reflexión y adaptación.";
+            } else {
+                return "Nivel Experto: Exhibe un dominio completo del liderazgo consciente, aplica principios en contextos variados y proporciona liderazgo transformacional en su entorno.";
+            }
+        }
+
+        // 5. Mostrar el reporte final (Modificado)
+        function showReport() {
+            showScreen('screen-report');
+            
+            // Calcular puntuación y nivel
+            const totalScore = Object.values(userAnswers).reduce((sum, ans) => sum + ans.points, 0);
+            const levelName = getScoreClassification(totalScore);
+
+            // Mostrar nombre y nivel
+            reportUserName.textContent = userName;
+            reportLevel.textContent = `Tu nivel: ${levelName.split(':')[0]}`; // Muestra solo "Nivel X"
+
+            reportSummary.innerHTML = ''; // Limpiar resumen
+            
+            // (Nuevo) Añadir descripción del nivel al reporte
+            const levelDescriptionItem = document.createElement('div');
+            levelDescriptionItem.className = 'p-4 bg-blue-50 rounded-lg border border-blue-200';
+            levelDescriptionItem.innerHTML = `
+                <h4 class="font-bold text-blue-800">Clasificación Obtenida</h4>
+                <p class="text-gray-700 italic mt-1">"${levelName}"</p>
+            `;
+            reportSummary.appendChild(levelDescriptionItem);
+
+
+            // Iterar sobre las respuestas guardadas y mostrarlas
+            for (const category in userAnswers) {
+                const answer = userAnswers[category];
+                const reportItem = document.createElement('div');
+                reportItem.className = 'p-4 bg-gray-50 rounded-lg';
+                
+                reportItem.innerHTML = `
+                    <h4 class="font-bold text-gray-800">${category}</h4>
+                    <p class="text-gray-700 italic mt-1">"${answer.text}"</p>
+                `;
+                reportSummary.appendChild(reportItem);
+            }
+
+            // (Nuevo) Iniciar envío automático
+            submitToGoogleSheet(totalScore, levelName);
+        }
+
+        // 6. Manejar el envío a Google Sheet (Modificado)
+        
+        // Listener para reintentar
+        submitBtn.addEventListener('click', () => {
+            // Recalcular por si acaso
+            const totalScore = Object.values(userAnswers).reduce((sum, ans) => sum + ans.points, 0);
+            const levelName = getScoreClassification(totalScore);
+            submitToGoogleSheet(totalScore, levelName);
+        });
+
+        async function submitToGoogleSheet(totalScore, levelName) {
+            // No cambiar de pantalla, mostrar estado en el botón
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+            submitStatus.textContent = 'Registrando tus respuestas...';
+            submitStatus.className = 'text-sm text-gray-600 mt-4 text-center'; // Reset color
+
+            // --- PREPARACIÓN DE DATOS PARA GOOGLE APPS SCRIPT ---
+            
+            // Objeto de datos a enviar (Nivel añadido)
+            const dataToSubmit = {
+                nombre: userName,
+                respuestas: userAnswers, // Envía el objeto completo de respuestas
+                puntuacionTotal: totalScore,
+                nivel: levelName // Enviar la clasificación completa
+            };
+
+            // --- INICIO DE LA SIMULACIÓN DE ENVÍO ---
+
+            // IMPORTANTE:
+            // Reemplaza esta URL con la URL de tu Web App de Google Apps Script
+            const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbzTxgwpSo-66tWPEC5w3ixdwDvMbRKzpnmUwkd9dLJ_pLMGFrkln_CTpp_hqMLWDg7l/exec';
+
+            console.log("--- SIMULACIÓN DE ENVÍO A GOOGLE SHEETS ---");
+            console.log("URL Destino (Reemplazar):", appsScriptUrl);
+            console.log("Datos a enviar (JSON):", JSON.stringify(dataToSubmit, null, 2));
+            
+            try {
+                // En una implementación real, descomentarías la siguiente sección:
+                /*
+                const response = await fetch(appsScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // Google Apps Script a menudo requiere 'no-cors' o una configuración de CORS adecuada
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // Redirigir manualmente si es necesario, aunque 'no-cors' lo previene
+                    // redirect: 'follow', 
+                    body: JSON.stringify(dataToSubmit)
+                });
+                
+                // Nota: con 'no-cors', no puedes leer la respuesta,
+                // así que asumimos éxito si no hay error.
+                
+                if (!response.ok && response.type !== 'opaque') {
+                     throw new Error('Network response was not ok');
+                }
+                */
+
+                // Simulamos una demora de red de 2 segundos
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                console.log("Simulación de envío completada.");
+                
+                // (Modificado) Actualizar UI en lugar de cambiar de pantalla
+                submitBtn.textContent = 'Enviado con Éxito';
+                submitBtn.disabled = true; // Se queda deshabilitado
+                submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                submitBtn.classList.add('bg-gray-500');
+                submitStatus.textContent = '¡Tus respuestas han sido registradas con éxito!';
+                submitStatus.className = 'text-sm text-green-600 mt-4 text-center';
+
+
+            } catch (error) {
+                console.error('Error al intentar enviar los datos (simulación):', error);
+                // (Modificado) Actualizar UI para reintentar
+                submitBtn.disabled = false; // Habilitar para reintentar
+                submitBtn.textContent = 'Reintentar Envío';
+                submitStatus.textContent = 'Hubo un error al enviar. Por favor, inténtalo de nuevo.';
+                submitStatus.className = 'text-sm text-red-600 mt-4 text-center';
+            }
+        }
+
+    </script>
+</body>
+</html>
