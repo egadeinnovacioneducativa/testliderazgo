@@ -398,6 +398,15 @@
             // VALIDACIÓN (Nuevo): Verificar que la URL fue cambiada
             if (appsScriptUrl === 'https://script.google.com/macros/s/AKfycbxjFQHFhNp9UMry2NM55qtWHIgV9BQwhh1oB2iXanAYCB0bBFRKX5pzl1js9Xv7QObL/exec') {
                 console.error("Error: La URL de Google Apps Script no ha sido configurada.");
+                
+                // (NUEVO) Añadir feedback al usuario y detener la función
+                submitBtn.disabled = false; // Habilitar para reintentar
+                submitBtn.textContent = 'Error de Configuración';
+                submitStatus.textContent = 'Error: La URL del script no está configurada. Contacta al administrador.';
+                submitStatus.className = 'text-sm text-red-600 mt-4 text-center';
+                return; // Detener la función
+            } // <-- ¡Esta es la llave que faltaba!
+
             // Opcional: registrar en consola lo que se envía
             console.log("Enviando a Google Sheets...");
             console.log("URL Destino:", appsScriptUrl);
