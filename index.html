@@ -27,12 +27,20 @@
         .option-card {
             border: 2px solid #e5e7eb; /* Borde gris */
             transition: all 0.2s ease-in-out;
+            cursor: pointer;
         }
 
         .option-card:hover {
             border-color: #3b82f6; /* Borde azul al pasar el ratón */
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Estilo para opciones deshabilitadas (prevenir doble clic) */
+        .option-card.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+            background-color: #f9fafb;
         }
 
         /* Estilo para la barra de progreso */
@@ -120,49 +128,31 @@
                 <!-- El resumen de respuestas se generará con JavaScript -->
             </div>
 
-            <button id="submit-btn" class="mt-8 w-full bg-green-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                Finalizar y Enviar Respuestas
+            <button id="submit-btn" class="mt-8 w-full bg-blue-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300" disabled>
+                Enviando datos...
             </button>
-            <!-- Mensaje de estado de envío (Nuevo) -->
-            <p id="submit-status" class="text-sm text-gray-600 mt-4 text-center"></p>
-        </div>
-        
-        <!-- Pantalla 5: Cargando (Ya no se usa, pero se deja por si acaso) -->
-        <div id="screen-loading" class="screen p-8 md:p-12 text-center">
-            <div class="flex justify-center items-center h-48">
-                <svg class="animate-spin h-12 w-12 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </div>
-            <h2 class="text-2xl font-semibold text-gray-700">Enviando tus respuestas...</h2>
-        </div>
+            <p id="submit-status" class="text-sm text-gray-500 mt-4 text-center"></p>
 
-        <!-- Pantalla 6: Agradecimiento (Ya no se usa) -->
-        <div id="screen-thanks" class="screen p-8 md:p-12 text-center">
-            <h1 class="text-3xl font-bold text-green-600 mb-4">¡Enviado con Éxito!</h1>
-            <p class="text-lg text-gray-700">Tus respuestas han sido registradas.</p>
-            <p class="text-gray-600 mt-2">Ya puedes cerrar esta ventana.</p>
         </div>
-
     </div>
 
     <script>
-        // --- ESTADO DE LA APLICACIÓN ---
-        let userName = "";
-        let userMatricula = ""; // (Nuevo)
-        let currentQuestionIndex = 0;
-        let userAnswers = {}; // Almacenará { category: { text, points } }
+        // --- INICIO: Lógica de la Aplicación ---
 
-        // --- DATOS DEL CUESTIONARIO ---
+        // (IMPORTANTE) URL de Google Apps Script
+        // Esta es la URL que proporcionaste
+        const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbxjFQHFhNp9UMry2NM55qtWHIgV9BQwhh1oB2iXanAYCB0bBFRKX5pzl1js9Xv7QObL/exec';
+
+
+        // 1. Definición de Datos del Cuestionario
         const quizData = [
             {
                 category: "Categoría 1: Principios de Liderazgo Consciente",
                 options: [
-                    { text: "Un ejemplo de un liderazgo consciente sería Satya Nadella, CEO de Microsoft, conocido por su enfoque en la empatía, la innovación inclusiva y la transformación cultural dentro de la empresa.", points: 200 },
-                    { text: "El liderazgo consciente es un enfoque que combina la conciencia personal con la responsabilidad social, enfocándose en la creación de valor sostenible a largo plazo. Se centra en la empatía, la ética y el bienestar colectivo.", points: 400 },
-                    { text: "Un líder consciente puede influir en la cultura organizacional promoviendo valores como la transparencia, la equidad y la inclusión, y al modelar comportamientos que otros en la organización aspiren a seguir.", points: 600 },
-                    { text: "Son dos principios fundamentales del liderazgo consciente: 1. Autoconciencia que permite conocer y entender las propias emociones, valores y motivaciones; 2. Empatía es la capacidad de entender y compartir los sentimientos de los demás.", points: 800 }
+                    { text: "Un ejemplo de un liderazgo consciente sería Satya Nadella, CEO de Microsoft, conocido por su enfoque en la empatía, la innovación inclusiva y la transformación cultural dentro de la empresa.", points: 200 }, // 100 * 2
+                    { text: "El liderazgo consciente es un enfoque que combina la conciencia personal con la responsabilidad social, enfocándose en la creación de valor sostenible a largo plazo. Se centra en la empatía, la ética y el bienestar colectivo.", points: 400 }, // 200 * 2
+                    { text: "Un líder consciente puede influir en la cultura organizacional promoviendo valores como la transparencia, la equidad y la inclusión, y al modelar comportamientos que otros en la organización aspiren a seguir.", points: 600 }, // 300 * 2
+                    { text: "Son dos principios fundamentales del liderazgo consciente: 1. Autoconciencia que permite conocer y entender las propias emociones, valores y motivaciones; 2. Empatía es la capacidad de entender y compartir los sentimientos de los demás.", points: 800 }  // 400 * 2
                 ]
             },
             {
@@ -203,200 +193,190 @@
             }
         ];
 
-        // --- SELECTORES DE ELEMENTOS ---
+        // 2. Estado de la Aplicación
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // Almacenará { category: { text, points } }
+        let userName = "";
+        let userMatricula = ""; // (Nuevo)
+
+        // 3. Referencias a Elementos del DOM
         const screens = document.querySelectorAll('.screen');
         const nameForm = document.getElementById('name-form');
-        const nameInput = document.getElementById('user-name');
-        const matriculaInput = document.getElementById('user-matricula'); // (Nuevo)
+        const userNameInput = document.getElementById('user-name');
+        const userMatriculaInput = document.getElementById('user-matricula'); // (Nuevo)
         const startQuizBtn = document.getElementById('start-quiz-btn');
-        const questionCategory = document.getElementById('question-category');
-        const optionsContainer = document.getElementById('options-container');
+        
         const progressText = document.getElementById('progress-text');
         const progressBar = document.getElementById('progress-bar');
+        const questionCategory = document.getElementById('question-category');
+        const optionsContainer = document.getElementById('options-container');
+
         const reportUserName = document.getElementById('report-user-name');
+        const reportLevel = document.getElementById('report-level');
         const reportSummary = document.getElementById('report-summary');
         const submitBtn = document.getElementById('submit-btn');
-        // Nuevos selectores
-        const reportLevel = document.getElementById('report-level');
         const submitStatus = document.getElementById('submit-status');
 
-        // --- LÓGICA DE LA APLICACIÓN ---
+        // 4. Funciones Principales
 
-        // Función para mostrar una pantalla específica
+        /**
+         * Muestra una pantalla específica por su ID y oculta las demás.
+         * @param {string} screenId - El ID de la pantalla a mostrar (ej. "screen-welcome")
+         */
         function showScreen(screenId) {
             screens.forEach(screen => {
-                screen.classList.remove('active');
+                if (screen.id === screenId) {
+                    screen.classList.add('active');
+                } else {
+                    screen.classList.remove('active');
+                }
             });
-            document.getElementById(screenId).classList.add('active');
         }
 
-        // 1. Manejar el envío del nombre
-        nameForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            userName = nameInput.value.trim();
-            userMatricula = matriculaInput.value.trim(); // (Nuevo)
-            if (userName && userMatricula) { // (Modificado)
+        /**
+         * Inicia el juego: guarda el nombre y matrícula, y muestra las instrucciones.
+         */
+        function startGame(event) {
+            event.preventDefault(); // Evitar que el formulario recargue la página
+            userName = userNameInput.value.trim();
+            userMatricula = userMatriculaInput.value.trim(); // (Nuevo)
+            
+            if (userName && userMatricula) {
                 showScreen('screen-instructions');
+            } else {
+                alert("Por favor, completa todos los campos.");
             }
-        });
+        }
 
-        // 2. Empezar el cuestionario
-        startQuizBtn.addEventListener('click', () => {
-            showScreen('screen-quiz');
-            renderQuestion(currentQuestionIndex);
-        });
+        /**
+         * Muestra la pregunta actual en la pantalla.
+         */
+        function renderQuestion() {
+            if (currentQuestionIndex < quizData.length) {
+                const question = quizData[currentQuestionIndex];
+                
+                // Actualizar barra de progreso
+                const progressPercentage = ((currentQuestionIndex + 1) / quizData.length) * 100;
+                progressText.textContent = `Pregunta ${currentQuestionIndex + 1} de ${quizData.length}`;
+                progressBar.style.width = `${progressPercentage}%`;
 
-        // 3. Renderizar la pregunta actual
-        function renderQuestion(index) {
-            if (index >= quizData.length) {
+                // Mostrar categoría y opciones
+                questionCategory.textContent = question.category;
+                optionsContainer.innerHTML = ''; // Limpiar opciones anteriores
+
+                question.options.forEach((option, index) => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'option-card p-4 rounded-lg shadow-sm cursor-pointer';
+                    optionElement.innerHTML = `<p class="text-gray-700">${option.text}</p>`;
+                    
+                    // Añadir evento de clic
+                    optionElement.addEventListener('click', () => selectAnswer(question.category, option));
+                    optionsContainer.appendChild(optionElement);
+                });
+
+            } else {
                 // Fin del cuestionario
                 showReport();
-                return;
             }
-
-            const question = quizData[index];
-            questionCategory.textContent = question.category;
-            optionsContainer.innerHTML = ''; // Limpiar opciones anteriores
-
-            question.options.forEach(option => {
-                const optionElement = document.createElement('div');
-                optionElement.className = 'option-card p-5 rounded-lg cursor-pointer';
-                optionElement.textContent = option.text;
-                
-                // (MODIFICADO) Usar function() para tener 'this'
-                optionElement.addEventListener('click', function() {
-                    // 'this' es el optionElement que fue clickeado
-                    selectAnswer(question.category, option, this);
-                });
-                
-                optionsContainer.appendChild(optionElement);
-            });
-
-            // Actualizar barra de progreso
-            progressText.textContent = `Pregunta ${index + 1} de ${quizData.length}`;
-            progressBar.style.width = `${((index + 1) / quizData.length) * 100}%`;
         }
 
-        // 4. Manejar la selección de respuesta
-        // (MODIFICADO) Acepta 'selectedElement' para deshabilitar opciones
-        function selectAnswer(category, option, selectedElement) {
-            // Guardar la respuesta (texto y puntos)
+        /**
+         * Registra la respuesta del usuario y avanza a la siguiente pregunta.
+         * @param {string} category - La categoría de la pregunta
+         * @param {object} option - El objeto de opción seleccionado ({ text, points })
+         */
+        function selectAnswer(category, option) {
+            // (NUEVO) Deshabilitar todas las opciones para evitar doble clic
+            const allOptions = optionsContainer.querySelectorAll('.option-card');
+            allOptions.forEach(opt => opt.classList.add('disabled'));
+
+            // Guardar la respuesta
             userAnswers[category] = {
                 text: option.text,
                 points: option.points
             };
 
-            // (NUEVO) Deshabilitar todas las opciones para prevenir doble clic
-            const allOptions = optionsContainer.querySelectorAll('.option-card');
-            allOptions.forEach(opt => {
-                opt.style.pointerEvents = 'none'; // Deshabilita clics
-                opt.style.opacity = '0.5';      // Atenúa visualmente
-            });
-            // (NUEVO) Resalta la opción seleccionada
-            selectedElement.style.opacity = '1';
-            selectedElement.style.borderColor = '#2563eb'; // Borde azul más fuerte
-            selectedElement.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-
-
             // Avanzar a la siguiente pregunta después de una breve pausa
-            currentQuestionIndex++;
             setTimeout(() => {
-                renderQuestion(currentQuestionIndex);
-            }, 300); // Pequeña demora para feedback visual
+                currentQuestionIndex++;
+                renderQuestion();
+            }, 300); // 300ms de pausa
         }
 
-        // (Nuevo) Función para obtener clasificación
-        function getScoreClassification(score) {
+        /**
+         * Calcula el puntaje total.
+         * @returns {number} - El puntaje total
+         */
+        function calculateScore() {
+            let totalScore = 0;
+            for (const category in userAnswers) {
+                totalScore += userAnswers[category].points;
+            }
+            return totalScore;
+        }
+
+        /**
+         * Obtiene la clasificación basada en el puntaje.
+         * @param {number} score - El puntaje total
+         * @returns {string} - El texto de la clasificación
+         */
+        function getClassification(score) {
             if (score <= 1000) {
                 return "Nivel Principiante: Conoce los conceptos básicos y muestra una comprensión inicial de los principios del liderazgo consciente.";
             } else if (score <= 2000) {
                 return "Nivel Intermedio: Muestra una comprensión sólida y puede aplicar los principios del liderazgo consciente en situaciones simuladas y menos complejas.";
             } else if (score <= 3000) {
                 return "Nivel Avanzado: Demuestra competencias avanzadas, puede aplicar el liderazgo consciente en situaciones más complejas y muestra habilidades de reflexión y adaptación.";
-            } else {
+            } else { // 3001 - 4000
                 return "Nivel Experto: Exhibe un dominio completo del liderazgo consciente, aplica principios en contextos variados y proporciona liderazgo transformacional en su entorno.";
             }
         }
 
-        // 5. Mostrar el reporte final (Modificado)
+        /**
+         * Muestra la pantalla de reporte final.
+         */
         function showReport() {
-            showScreen('screen-report');
-            
-            // Calcular puntuación y nivel
-            const totalScore = Object.values(userAnswers).reduce((sum, ans) => sum + ans.points, 0);
-            const levelName = getScoreClassification(totalScore);
+            const totalScore = calculateScore();
+            const classification = getClassification(totalScore);
 
-            // Mostrar nombre y nivel
+            // Rellenar la pantalla de reporte
             reportUserName.textContent = userName;
-            reportLevel.textContent = `Tu nivel: ${levelName.split(':')[0]}`; // Muestra solo "Nivel X"
+            reportLevel.textContent = classification; // Mostrar la clasificación completa
 
-            reportSummary.innerHTML = ''; // Limpiar resumen
-            
-            // (Nuevo) Añadir descripción del nivel al reporte
-            const levelDescriptionItem = document.createElement('div');
-            levelDescriptionItem.className = 'p-4 bg-blue-50 rounded-lg border border-blue-200';
-            levelDescriptionItem.innerHTML = `
-                <h4 class="font-bold text-blue-800">Clasificación Obtenida</h4>
-                <p class="text-gray-700 italic mt-1">"${levelName}"</p>
-            `;
-            reportSummary.appendChild(levelDescriptionItem);
-
-
-            // Iterar sobre las respuestas guardadas y mostrarlas
+            // Rellenar el resumen de respuestas
+            reportSummary.innerHTML = ''; // Limpiar
             for (const category in userAnswers) {
                 const answer = userAnswers[category];
-                const reportItem = document.createElement('div');
-                reportItem.className = 'p-4 bg-gray-50 rounded-lg';
-                
-                reportItem.innerHTML = `
-                    <h4 class="font-bold text-gray-800">${category}</h4>
-                    <p class="text-gray-700 italic mt-1">"${answer.text}"</p>
+                const summaryElement = document.createElement('div');
+                summaryElement.className = 'py-2';
+                summaryElement.innerHTML = `
+                    <h4 class="font-semibold text-gray-800">${category}</h4>
+                    <p class="text-gray-600 text-sm">${answer.text}</p>
                 `;
-                reportSummary.appendChild(reportItem);
+                reportSummary.appendChild(summaryElement);
             }
-
-            // (Nuevo) Iniciar envío automático
-            submitToGoogleSheet(totalScore, levelName);
-        }
-
-        // 6. Manejar el envío a Google Sheet (Modificado)
-        
-        // Listener para reintentar
-        submitBtn.addEventListener('click', () => {
-            // Recalcular por si acaso
-            const totalScore = Object.values(userAnswers).reduce((sum, ans) => sum + ans.points, 0);
-            const levelName = getScoreClassification(totalScore);
-            submitToGoogleSheet(totalScore, levelName);
-        });
-
-        async function submitToGoogleSheet(totalScore, levelName) {
-            // No cambiar de pantalla, mostrar estado en el botón
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Enviando...';
-            submitStatus.textContent = 'Registrando tus respuestas...';
-            submitStatus.className = 'text-sm text-gray-600 mt-4 text-center'; // Reset color
-
-            // --- PREPARACIÓN DE DATOS PARA GOOGLE APPS SCRIPT ---
             
-            // Objeto de datos a enviar (Nivel añadido)
-            const dataToSubmit = {
+            // Mostrar la pantalla
+            showScreen('screen-report');
+
+            // Enviar datos a Google Sheet automáticamente
+            submitToGoogleSheet({
                 nombre: userName,
                 matricula: userMatricula, // (Nuevo)
-                respuestas: userAnswers, // Envía el objeto completo de respuestas
                 puntuacionTotal: totalScore,
-                nivel: levelName // Enviar la clasificación completa
-            };
+                nivel: classification,
+                respuestas: userAnswers
+            });
+        }
 
-            // --- INICIO DE LA SIMULACIÓN DE ENVÍO ---
-            // --- INICIO DEL ENVÍO REAL A GOOGLE SHEETS ---
-
-            // IMPORTANTE:
-            // Reemplaza esta URL con la URL de tu Web App de Google Apps Script
-            // ¡Asegúrate de reemplazar esta URL con la URL de tu Web App!
-            const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbxjFQHFhNp9UMry2NM55qtWHIgV9BQwhh1oB2iXanAYCB0bBFRKX5pzl1js9Xv7QObL/exec';
-
+        /**
+         * Envía los datos finales a Google Apps Script.
+         * @param {object} data - Los datos a enviar
+         */
+        async function submitToGoogleSheet(data) {
+            
             // VALIDACIÓN (Nuevo): Verificar que la URL fue cambiada
-            if (appsScriptUrl === 'https://script.google.com/macros/s/AKfycbxjFQHFhNp9UMry2NM55qtWHIgV9BQwhh1oB2iXanAYCB0bBFRKX5pzl1js9Xv7QObL/exec') {
+            if (appsScriptUrl === 'URL_DE_TU_GOOGLE_APPS_SCRIPT_WEB_APP_AQUI') {
                 console.error("Error: La URL de Google Apps Script no ha sido configurada.");
                 
                 // (NUEVO) Añadir feedback al usuario y detener la función
@@ -405,76 +385,70 @@
                 submitStatus.textContent = 'Error: La URL del script no está configurada. Contacta al administrador.';
                 submitStatus.className = 'text-sm text-red-600 mt-4 text-center';
                 return; // Detener la función
-            } // <-- ¡Esta es la llave que faltaba!
+            }
 
             // Opcional: registrar en consola lo que se envía
-            console.log("Enviando a Google Sheets...");
-            console.log("URL Destino:", appsScriptUrl);
-            console.log("Datos (JSON):", JSON.stringify(dataToSubmit, null, 2));
-            
+            console.log("Enviando a Google Sheets...", data);
+
             try {
-                // En una implementación real, descomentarías la siguiente sección:
-                /*
                 const response = await fetch(appsScriptUrl, {
                     method: 'POST',
-                    mode: 'no-cors', // Google Apps Script a menudo requiere 'no-cors' o una configuración de CORS adecuada
+                    mode: 'no-cors', // Importante para Google Apps Script
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'text/plain', // Usar text/plain para no-cors
                     },
-                    // Redirigir manually si es necesario, aunque 'no-cors' lo previene
-                    // redirect: 'follow', 
-                    body: JSON.stringify(dataToSubmit)
+                    body: JSON.stringify(data) // El script de Google lo parseará
                 });
                 
-                // Nota: con 'no-cors', no puedes leer la respuesta,
-                // así que asumimos éxito si no hay error.
+                // Nota: con 'no-cors', no podemos leer la respuesta.
+                // Asumimos éxito si el 'fetch' no lanza un error de red.
                 
-                if (!response.ok && response.type !== 'opaque') {
-                     throw new Error('Network response was not ok');
-                }
-                */
-
-                // Simulamos una demora de red de 2 segundos
-                // await new Promise(resolve => setTimeout(resolve, 2000));
-                // console.log("Simulación de envío completada.");
-
-                // ¡Esta es la llamada real!
-                const response = await fetch(appsScriptUrl, {
-                    method: 'POST',
-                    // Google Apps Script (doPost) espera los datos en e.postData.contents
-                    // Enviarlo como 'text/plain' es la forma más robusta de asegurar
-                    // que Apps Script reciba el JSON como un string para parsear.
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8', 
-                    },
-                    body: JSON.stringify(dataToSubmit),
-                    mode: 'no-cors' // 'no-cors' es vital para evitar errores de CORS con Apps Script
-                });
-
-                // Con 'no-cors', la respuesta es "opaca" (no podemos leerla).
-                // No podemos verificar response.ok. Simplemente asumimos que se envió
-                // si la promesa de fetch se resolvió sin un error de red.
-                console.log("Datos enviados (modo no-cors). El script de Google ahora está procesando.");
-                
-                // (Modificado) Actualizar UI en lugar de cambiar de pantalla
-                submitBtn.textContent = 'Enviado con Éxito';
-                submitBtn.disabled = true; // Se queda deshabilitado
-                submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-                submitBtn.classList.add('bg-gray-500');
-                submitStatus.textContent = '¡Tus respuestas han sido registradas con éxito!';
-                submitStatus.className = 'text-sm text-green-600 mt-4 text-center';
-
+                console.log("Datos enviados (modo no-cors)");
+                submitBtn.textContent = 'Datos Enviados Correctamente';
+                submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                submitBtn.classList.add('bg-green-600'); // Color verde
+                submitStatus.textContent = '¡Tu información ha sido registrada!';
+                submitStatus.className = 'text-sm text-green-700 mt-4 text-center';
 
             } catch (error) {
-                console.error('Error al intentar enviar los datos (simulación):', error);
-                // (Modificado) Actualizar UI para reintentar
+                console.error("Error al intentar enviar los datos:", error);
+                
                 submitBtn.disabled = false; // Habilitar para reintentar
                 submitBtn.textContent = 'Reintentar Envío';
-                submitStatus.textContent = 'Hubo un error al enviar. Por favor, inténtalo de nuevo.';
+                submitBtn.classList.add('bg-red-600', 'hover:bg-red-700'); // Color rojo
+                submitStatus.textContent = `Error al enviar: ${error.message}. Por favor, verifica tu conexión e inténtalo de nuevo.`;
                 submitStatus.className = 'text-sm text-red-600 mt-4 text-center';
             }
         }
 
+
+        // 5. Asignación de Eventos
+        nameForm.addEventListener('submit', startGame);
+        startQuizBtn.addEventListener('click', () => {
+            showScreen('screen-quiz');
+            renderQuestion();
+        });
+
+        // Evento para el botón de reintento (en caso de que falle el envío)
+        submitBtn.addEventListener('click', () => {
+            if (submitBtn.textContent === 'Reintentar Envío') {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Enviando datos...';
+                
+                // Re-calcular y re-enviar
+                const totalScore = calculateScore();
+                const classification = getClassification(totalScore);
+                submitToGoogleSheet({
+                    nombre: userName,
+                    matricula: userMatricula,
+                    puntuacionTotal: totalScore,
+                    nivel: classification,
+                    respuestas: userAnswers
+                });
+            }
+        });
+
+        // --- FIN: Lógica de la Aplicación ---
     </script>
 </body>
 </html>
