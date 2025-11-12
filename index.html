@@ -113,7 +113,7 @@
 
             <!-- Mensaje Notorio (Nuevo) -->
             <div class="bg-blue-700 text-white p-4 rounded-lg text-center font-semibold text-lg mt-6 mb-8">
-                <p>Es esencial que captures una imagen de tu resultado, ya que formará parte del entregable. Posteriormente, revisa en qué consiste la segunda parte de la actividad en Canvas.</p>
+                <p>Esencial que captures una imagen de tu resultado, ya que formará parte del entregable. Posteriormente, revisa en qué consiste la segunda parte de la actividad en Canvas.</p>
             </div>
             
             <div id="report-summary" class="space-y-4 border-t border-b border-gray-200 py-6">
@@ -263,8 +263,10 @@
                 optionElement.className = 'option-card p-5 rounded-lg cursor-pointer';
                 optionElement.textContent = option.text;
                 
-                optionElement.addEventListener('click', () => {
-                    selectAnswer(question.category, option);
+                // (MODIFICADO) Usar function() para tener 'this'
+                optionElement.addEventListener('click', function() {
+                    // 'this' es el optionElement que fue clickeado
+                    selectAnswer(question.category, option, this);
                 });
                 
                 optionsContainer.appendChild(optionElement);
@@ -276,12 +278,25 @@
         }
 
         // 4. Manejar la selección de respuesta
-        function selectAnswer(category, option) {
+        // (MODIFICADO) Acepta 'selectedElement' para deshabilitar opciones
+        function selectAnswer(category, option, selectedElement) {
             // Guardar la respuesta (texto y puntos)
             userAnswers[category] = {
                 text: option.text,
                 points: option.points
             };
+
+            // (NUEVO) Deshabilitar todas las opciones para prevenir doble clic
+            const allOptions = optionsContainer.querySelectorAll('.option-card');
+            allOptions.forEach(opt => {
+                opt.style.pointerEvents = 'none'; // Deshabilita clics
+                opt.style.opacity = '0.5';      // Atenúa visualmente
+            });
+            // (NUEVO) Resalta la opción seleccionada
+            selectedElement.style.opacity = '1';
+            selectedElement.style.borderColor = '#2563eb'; // Borde azul más fuerte
+            selectedElement.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+
 
             // Avanzar a la siguiente pregunta después de una breve pausa
             currentQuestionIndex++;
@@ -378,11 +393,11 @@
             // IMPORTANTE:
             // Reemplaza esta URL con la URL de tu Web App de Google Apps Script
             // ¡Asegúrate de reemplazar esta URL con la URL de tu Web App!
-            const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbzPaiCEDBEPlA14oHHWsgRKpLkCgJDrKtIIlnRKm1uEnQ8WffW0kqY2zE0LTS_vd_ou/exec';
+            const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbxjFQHFhNp9UMry2NM55qtWHIgV9BQwhh1oB2iXanAYCB0bBFRKX5pzl1js9Xv7QObL/exec';
 
-            console.log("--- SIMULACIÓN DE ENVÍO A GOOGLE SHEETS ---");
-            console.log("URL Destino (Reemplazar):", appsScriptUrl);
-            console.log("Datos a enviar (JSON):", JSON.stringify(dataToSubmit, null, 2));
+            // VALIDACIÓN (Nuevo): Verificar que la URL fue cambiada
+            if (appsScriptUrl === 'https://script.google.com/macros/s/AKfycbxjFQHFhNp9UMry2NM55qtWHIgV9BQwhh1oB2iXanAYCB0bBFRKX5pzl1js9Xv7QObL/exec') {
+                console.error("Error: La URL de Google Apps Script no ha sido configurada.");
             // Opcional: registrar en consola lo que se envía
             console.log("Enviando a Google Sheets...");
             console.log("URL Destino:", appsScriptUrl);
